@@ -6,7 +6,7 @@ public final class CliSample {
     private let semaphore = DispatchSemaphore(value: 0)
     
     private lazy var client: StunClient = {
-        let successCallback: (String, Int) -> () = { [weak self] (myAddress: String, myPort: Int) in
+		let successCallback: (String, Int, Int) -> () = { [weak self] (myAddress: String, myPort: Int, localPort: Int) in
                 guard let self = self else { return }
                 
                 print("COMPLETED, my address: \(myAddress) my port: \(myPort)")

@@ -15,7 +15,7 @@ final class StunClientIntegrationTests: XCTestCase {
         
         // Supposed that there is no STUN server run locally on port 19302
         let client = StunClient(stunIpAddress: "127.0.0.1", stunPort: 19302, localPort: UInt16(15702), timeoutInMilliseconds: readTimeoutInMilliseconds)
-        let successCallback: (String, Int) -> () = { (myAddress: String, myPort: Int) in
+		let successCallback: (String, Int, Int) -> () = { (myAddress: String, myPort: Int, localPort: Int) in
             
             // Then
             XCTAssert(false, "Not supposed to trigger success callbak")
@@ -109,7 +109,7 @@ final class StunClientIntegrationTests: XCTestCase {
         let semaphore = DispatchSemaphore(value: 0)
         
         let client = StunClient(stunIpAddress: localServerAddress, stunPort: UInt16(stunPort), localPort: UInt16(localPort), timeoutInMilliseconds: readTimeoutInMilliseconds)
-        let successCallback: (String, Int) -> () = { (myAddress: String, myPort: Int) in
+		let successCallback: (String, Int, Int) -> () = { (myAddress: String, myPort: Int, localPort: Int) in
             
             // Then
             addressToCheck = myAddress
@@ -202,7 +202,7 @@ final class StunClientIntegrationTests: XCTestCase {
         let semaphore = DispatchSemaphore(value: 0)
         
         let client = StunClient(stunIpAddress: localServerAddress, stunPort: UInt16(stunPort), localPort: UInt16(localPort), timeoutInMilliseconds: readTimeoutInMilliseconds)
-        let successCallback: (String, Int) -> () = { (myAddress: String, myPort: Int) in
+		let successCallback: (String, Int, Int) -> () = { (myAddress: String, myPort: Int, localPort: Int) in
             
             // Then
              XCTAssert(false, "Not supposed to trigger success callbak")
