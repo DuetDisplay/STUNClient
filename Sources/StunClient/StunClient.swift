@@ -52,7 +52,7 @@ open class StunClient {
     private let stunPort: UInt16
     private let localPort: UInt16
     private let timeoutInMilliseconds: Int64
-    private var successCallback: ((String, Int) -> ())?
+    private var successCallback: ((String, Int, Int) -> ())?
     private var natTypeCallback: ((NatParams) -> ())?
     private var errorCallback: ((StunError) -> ())?
     private var verboseCallback: ((String) -> ())?
@@ -106,7 +106,7 @@ open class StunClient {
         return self
     }
     
-    public func ifWhoAmISuccessful(_ callback: @escaping (String, Int) -> ()) -> StunClient {
+    public func ifWhoAmISuccessful(_ callback: @escaping (String, Int, Int) -> ()) -> StunClient {
         guard successCallback == nil else { fatalError("successCallback can be assigned only once") }
         
         successCallback = callback
@@ -184,8 +184,7 @@ open class StunClient {
                 errorCallback?(StunError.cantConvertValue)
                 return
         }
-        
-        successCallback?(addressPacket.address, Int(addressPacket.port))
+        successCallback?(addressPacket.address, Int(addressPacket.port), Int(localPort))
     }
     
     private func startWhoAmI() {
