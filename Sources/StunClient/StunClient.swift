@@ -61,7 +61,7 @@ open class StunClient {
     private var group: MultiThreadedEventLoopGroup?
     private var bootstrap: DatagramBootstrap?
     
-    private lazy var stunHandler = { StunInboundHandler(errorHandler: self.errorHandler,
+    private lazy var stunHandler = { [unowned self] in StunInboundHandler(errorHandler: self.errorHandler,
                                                              attributesHandler: self.attributesHandler) }()
 
     private func initBootstrap() {
