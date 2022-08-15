@@ -69,7 +69,7 @@ open class StunClient {
         
         bootstrap = DatagramBootstrap(group: group!)
         .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-        .channelInitializer { channel in
+        .channelInitializer { [unowned self] channel in
             channel.pipeline.addHandlers([
                  EnvelopToByteBufferConverter(errorHandler: self.errorHandler),
                  ByteToMessageHandler(StunCodec()),
