@@ -61,8 +61,9 @@ open class StunClient {
     private var group: MultiThreadedEventLoopGroup?
     private var bootstrap: DatagramBootstrap?
     
-    private lazy var stunHandler = { [unowned self] in StunInboundHandler(errorHandler: self.errorHandler,
-                                                             attributesHandler: self.attributesHandler) }()
+    private lazy var stunHandler = { [unowned self] in
+			StunInboundHandler(errorHandler: self.errorHandler, attributesHandler: self.attributesHandler)
+	}()
 
     private func initBootstrap() {
         group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -156,12 +157,12 @@ open class StunClient {
             closeBootstrap()
         }
         
-        if let verboseCallback = verboseCallback {
-            attributes.forEach { attribute in
-                verboseCallback(attribute.description)
-            }
-        }
-        
+		attributes.forEach { [weak self] attribute in
+			if let verboseCallback = self?.verboseCallback {
+				verboseCallback(attribute.description)
+			}
+		}
+		
         if responseWithError {
             if let attribute = attributes.filter({ $0.attributeType == AttributeType.ERROR_CODE}).first,
                 let errorPacket = attribute.attributeType.getAttribute(from: Data((attribute.attributeBodyData))) as? ERROR_CODE_ATTRIBUTE {
