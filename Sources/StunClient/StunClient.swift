@@ -61,7 +61,7 @@ open class StunClient {
     private var group: MultiThreadedEventLoopGroup?
     private var bootstrap: DatagramBootstrap?
     
-    private lazy var stunHandler = { [unowned self] in
+    private lazy var stunHandler = {
 		StunInboundHandler(
 			errorHandler: { [weak self] error in
 				self?.errorHandler(error)
