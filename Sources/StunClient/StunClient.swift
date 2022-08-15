@@ -62,7 +62,14 @@ open class StunClient {
     private var bootstrap: DatagramBootstrap?
     
     private lazy var stunHandler = { [unowned self] in
-			StunInboundHandler(errorHandler: self.errorHandler, attributesHandler: self.attributesHandler)
+		StunInboundHandler(
+			errorHandler: { [weak self] error in
+				self?.errorHandler(error)
+			},
+			attributesHandler: { [weak self] attributes, responseWithError in
+				self?.attributesHandler(attributes, responseWithError: responseWithError)
+			}
+		)
 	}()
 
     private func initBootstrap() {
