@@ -41,21 +41,22 @@ struct StunPacket {
 	static func makeBindingRequest(with family: ProtocolFamily) -> StunPacket  {
 		if case .ipv6 = family {
 			return StunPacket(msgRequestType: [0x00, 0x01],
-									bodyLength:  [0x00, 0x08],
-									magicCookie: MagicCookie,
-									transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
-									body: REQUESTED_ADDRESS_FAMILY(protocolFamily: family).toData()
-									//body: [0x00, 0x17, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02]
-
+							  bodyLength:  [0x00, 0x08],
+							  magicCookie: MagicCookie,
+							  transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
+							  body: REQUESTED_ADDRESS_FAMILY(protocolFamily: family).toData()
+							  //body: [0x00, 0x17, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02]
+			)
 		} else {
-				return StunPacket(msgRequestType: [0x00, 0x01],
-										bodyLength:  [0x00, 0x00],
-										magicCookie: MagicCookie,
-										transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
-										body: []
-		)
+			return StunPacket(msgRequestType: [0x00, 0x01],
+							  bodyLength:  [0x00, 0x00],
+							  magicCookie: MagicCookie,
+							  transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
+							  body: []
+			)
+		}
 	}
-    
+	
     static func parse(from data: Data) -> StunPacket? {
         guard data.count >= stunHeaderLength, data.count == Int(data[2])*256 + Int(data[3]) + 20 else {
             return nil
