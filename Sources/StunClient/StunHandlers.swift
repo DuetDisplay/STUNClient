@@ -56,44 +56,45 @@ final class StunInboundHandler: ChannelInboundHandler {
     public typealias ErrorHandler = ((StunError) -> ())?
     
     private let errorHandler: ErrorHandler
-    private let attributesHandler:  ([StunAttribute], Bool) -> ()
+	private let attributesHandler:  ([StunAttribute], Bool, [UInt8]) -> ()
     private var sentPacket: StunPacket?
     
-    init(errorHandler: ErrorHandler, attributesHandler: @escaping ([StunAttribute], Bool) -> ()) {
+	init(errorHandler: ErrorHandler, attributesHandler: @escaping ([StunAttribute], Bool, [UInt8]) -> ()) {
         self.errorHandler = errorHandler
         self.attributesHandler = attributesHandler
     }
     
-    public func sendBindingRequest(channel: Channel, toStunServerAddress address: String, toStunServerPort port: Int) {
-        sentPacket = StunPacket.makeBindingRequest()
-        let requestData = sentPacket!.toData()
-        
-        let remoteAddress: SocketAddress
-        do {
-            remoteAddress = try SocketAddress.makeAddressResolvingHost(address, port: port)
-        } catch {
-            errorHandler?(.cantResolveStunServerAddress)
-            return
-        }
-        
-        var buffer = channel.allocator.buffer(capacity: requestData.count)
-        buffer.writeBytes(requestData)
+	public func sendBindingRequest(channel: Channel, toStunServerAddress address: String, toStunServerPort port: Int) {
+		let remoteAddress: SocketAddress
+		do {
+			remoteAddress = try SocketAddress.makeAddressResolvingHost(address, port: port)
+		} catch {
+			errorHandler?(.cantResolveStunServerAddress)
+			return
+		}
 
-        let envolope = AddressedEnvelope<ByteBuffer>(remoteAddress: remoteAddress, data: buffer)
-        
-        channel.writeAndFlush(self.wrapOutboundOut(envolope), promise: nil)
-    }
+		let protocolFamily = remoteAddress.protocol == .inet ? ProtocolFamily.ipv4 : ProtocolFamily.ipv6
+		sentPacket = StunPacket.makeBindingRequest(with: protocolFamily)
+		let requestData = sentPacket!.toData()
+ 
+		var buffer = channel.allocator.buffer(capacity: requestData.count)
+		buffer.writeBytes(requestData)
+
+		let envolope = AddressedEnvelope<ByteBuffer>(remoteAddress: remoteAddress, data: buffer)
+		
+		channel.writeAndFlush(self.wrapOutboundOut(envolope), promise: nil)
+	}
     
-    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        let packet = self.unwrapInboundIn(data)
-       
-        guard let sentPacket = sentPacket, sentPacket.isCorrectResponse(packet) else {
-            errorHandler?(.wrongResponse)
-            return
-        }
-        
-        attributesHandler(packet.attributes(), packet.isError())
-    }
+	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+		let packet = self.unwrapInboundIn(data)
+	   
+		guard let sentPacket = sentPacket, sentPacket.isCorrectResponse(packet) else {
+			errorHandler?(.wrongResponse)
+			return
+		}
+		
+		attributesHandler(packet.attributes(), packet.isError(), sentPacket.transactionIdBindingRequest)
+	}
     
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
         errorHandler?(.cantRead(error.localizedDescription))

@@ -38,14 +38,15 @@ struct StunPacket {
         return Data(msgRequestType + bodyLength + magicCookie + transactionIdBindingRequest + body)
     }
     
-    static func makeBindingRequest() -> StunPacket  {
-        return StunPacket(msgRequestType: [0x00, 0x01],
-                                bodyLength:  [0x00, 0x00],
-                                magicCookie: MagicCookie,
-                                transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
-                                body: []
-        )
-    }
+	static func makeBindingRequest(with family: ProtocolFamily) -> StunPacket  {
+		return StunPacket(msgRequestType: [0x00, 0x01],
+								bodyLength:  [0x00, 0x08],
+								magicCookie: MagicCookie,
+								transactionIdBindingRequest: RandomTransactionID.getTransactionID(),
+								body: REQUESTED_ADDRESS_FAMILY(protocolFamily: family).toData()
+								//body: [0x00, 0x17, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02]
+		)
+	}
     
     static func parse(from data: Data) -> StunPacket? {
         guard data.count >= stunHeaderLength, data.count == Int(data[2])*256 + Int(data[3]) + 20 else {
@@ -104,29 +105,33 @@ struct StunAttribute {
     }
     
     var attributeType: AttributeType {
-        return AttributeType(rawValue: Int(self.attributeTypeData[0]) * 256 + Int(self.attributeTypeData[1])) ?? .UNKNOWN
+        return AttributeType(rawValue: UInt16(self.attributeTypeData[0]) * 256 + UInt16(self.attributeTypeData[1])) ?? .UNKNOWN
     }
     
     func toArray() -> [UInt8] {
         return self.attributeTypeData + self.attributeLengthData + self.attributeBodyData
     }
     
-    var description: String {
-        return "\(attributeType) \n \(attributeType.getAttribute(from: Data(self.attributeBodyData))?.description ?? "description unavailable")"
-    }
+	func getDescription(with transactionId: [UInt8]) -> String {
+		  let atrribute = attributeType.getAttribute(from: Data(self.attributeBodyData),
+													 transactionId: transactionId,
+													 magicCookie: MagicCookie)
+		  return "\(attributeType) \n \(atrribute?.description ?? "description unavailable")"
+	  }
     
-    static func getAttribute(from data: [UInt8]) -> StunAttribute? {
-        guard data.count > 4, data.count >= Int(data[2]) * 256 + Int(data[3]) else { return nil }
-        
-        return StunAttribute(attributeTypeData: [UInt8](data[0..<2]),
-                             attributeLengthData:  [UInt8](data[2..<4]),
-                             attributeBodyData: [UInt8](data[4..<4 + Int(data[2]) * 256 + Int(data[3])]))
-    }
+	static func getAttribute(from data: [UInt8]) -> StunAttribute? {
+		guard data.count > 4,
+			  data.count >= Int(data[2]) * 256 + Int(data[3]) else { return nil }
+		
+		return StunAttribute(attributeTypeData: [UInt8](data[0..<2]),
+							 attributeLengthData:  [UInt8](data[2..<4]),
+							 attributeBodyData: [UInt8](data[4..<4 + Int(data[2]) * 256 + Int(data[3])]))
+	}
     
-    static func formAttribute(type: AttributeType, body:[UInt8]) -> StunAttribute {
-        return StunAttribute(attributeTypeData: [UInt8(type.rawValue / 256), UInt8(type.rawValue % 256)],
-                             attributeLengthData: [UInt8(body.count / 256), UInt8(body.count % 256)],
-                             attributeBodyData: body
-        )
-    }
+	static func formAttribute(type: AttributeType, body:[UInt8]) -> StunAttribute {
+		return StunAttribute(attributeTypeData: [UInt8(type.rawValue / 256), UInt8(type.rawValue % 256)],
+							 attributeLengthData: [UInt8(body.count / 256), UInt8(body.count % 256)],
+							 attributeBodyData: body
+		)
+	}
 }
